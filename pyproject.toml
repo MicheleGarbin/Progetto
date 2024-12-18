@@ -10,6 +10,7 @@ dependencies = [
     "mplbasketball>=1.0.0",
     "nba-api>=1.6.1",
     "pandas>=2.2.3",
+    "pillow>=11.0.0",
     "polars>=1.17.1",
     "scikit-learn>=1.6.0",
     "seaborn>=0.13.2",

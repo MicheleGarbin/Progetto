@@ -55,12 +55,18 @@ def add_coordinates(data):
     return data
 
 
-# Questa funzione restituisce un'immagine ridimensionata da un url dato
-def load_image(image_url):
-    response = requests.get(image_url)
-    svg_data = response.content
+# Questa funzione restituisce un'immagine presa da un link/path ridimensionata
+def load_image(svg_file):
+    # Tratto in maniera diversa i file svg che prendo da internet rispetto 
+    # a quelli che ho nella cartella locale Logos
+    if svg_file[0] == "h":
+        response = requests.get(svg_file)
+        svg_file = response.content
+    else:
+        with open(svg_file, "rb") as f:
+            svg_file = f.read()
     # Converti l'SVG in PNG usando cairosvg
-    png_data = cairosvg.svg2png(bytestring = svg_data)
+    png_data = cairosvg.svg2png(bytestring = svg_file)
     # Salvo il PNG in memoria con Pillow
     image =  Image.open(io.BytesIO(png_data))
     # Ottengo le dimensioni
@@ -75,43 +81,42 @@ def get_logo_data():
     logo_data = {
         "Atlanta Hawks": "https://upload.wikimedia.org/wikipedia/it/e/ee/Atlanta_Hawks_logo2.svg",
         "Boston Celtics": "https://upload.wikimedia.org/wikipedia/it/d/d4/Boston_Celtics_logo.svg",
-        "Brooklyn Nets": "https://cdn.nba.com/logos/nba/1610612751/primary/L/logo.svg",
+        "Brooklyn Nets": "https://cdn.nba.com/teams/uploads/sites/1610612751/2024/07/BKN_Primary.svg",
         "Charlotte Hornets": "https://upload.wikimedia.org/wikipedia/en/c/c4/Charlotte_Hornets_%282014%29.svg",
-        "Chicago Bulls": "https://drive.google.com/uc?export=view&id=1G7Mlm1-oIi2oXvSsRFxT1pnFi-L5JKDc",
-        "Cleveland Cavaliers": "https://brandlogos.net/wp-content/uploads/2021/11/cleveland_cavaliers-logo.svg",
-        "Dallas Mavericks": "https://brandlogos.net/wp-content/uploads/2021/11/dallas_mavericks-logo.svg",
-        "Denver Nuggets": "https://brandlogos.net/wp-content/uploads/2021/11/denver_nuggets-logo.svg",
-        "Detroit Pistons": "https://upload.wikimedia.org/wikipedia/commons/f/fc/Logo_of_the_Detroit_Pistons_%282017%E2%80%93present%29.svg",
-        "Golden State Warriors": "https://brandlogos.net/wp-content/uploads/2021/11/golden_state_warriors-logo.svg",
-        "Houston Rockets": (29.7604, -95.3698),
-        "Indiana Pacers": (39.7684, -86.1581),
-        "Los Angeles Clippers": (34.0522, -118.2437),
+        "Chicago Bulls": "https://cdn.nba.com/teams/uploads/sites/1610612741/2021/10/bulls-svg.svg",
+        "Cleveland Cavaliers": "Logos/cavs_logo.svg",
+        "Dallas Mavericks": "https://upload.wikimedia.org/wikipedia/it/9/9b/Dallas_Mavericks_logo2.svg",
+        "Denver Nuggets": "https://cdn.nba.com/teams/uploads/sites/1610612743/2021/11/dnuggets-primary-web.svg",
+        "Detroit Pistons": "Logos/pistons_logo.svg",
+        "Golden State Warriors": "https://cdn.nba.com/teams/uploads/sites/1610612744/2022/06/gsw-logo-1920.svg",
+        "Houston Rockets": "Logos/rockets_logo.svg",
+        "Indiana Pacers": "Logos/pacers_logo.svg",
+        "Los Angeles Clippers": "Logos/clippers_logo.svg",
         "Los Angeles Lakers": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg",
-        "Memphis Grizzlies": (35.1495, -90.0490),
-        "Miami Heat": (25.7617, -80.1918),
-        "Milwaukee Bucks": (43.0389, -87.9065),
-        "Minnesota Timberwolves": (44.9778, -93.2650),
-        "New Orleans Pelicans": (29.9511, -90.0715),
-        "New York Knicks": (40.7128, -74.0060),
-        "Oklahoma City Thunder": (35.4676, -97.5164),
-        "Orlando Magic": (28.5383, -81.3792),
-        "Philadelphia 76ers": (39.9526, -75.1652),
-        "Phoenix Suns": (33.4484, -112.0740),
-        "Portland Trail Blazers": (45.5051, -122.6750),
-        "Sacramento Kings": (38.5816, -121.4944),
-        "San Antonio Spurs": (29.4241, -98.4936),
-        "Toronto Raptors": (43.651070, -79.347015),
-        "Utah Jazz": (40.7608, -111.8910),
-        "Washington Wizards": (38.9072, -77.0369)
-        
+        "Memphis Grizzlies": "Logos/grizzlies_logo.svg",
+        "Miami Heat": "Logos/heat_logo.svg",
+        "Milwaukee Bucks": "https://upload.wikimedia.org/wikipedia/it/4/4a/Milwaukee_Bucks_logo.svg",
+        "Minnesota Timberwolves": "https://cdn.nba.com/teams/uploads/sites/1610612750/2021/11/logo-1.svg",
+        "New Orleans Pelicans": "https://cdn.nba.com/teams/uploads/sites/1610612740/2021/12/pelicans_primary_logo.svg",
+        "New York Knicks": "https://upload.wikimedia.org/wikipedia/en/2/25/New_York_Knicks_logo.svg",
+        "Oklahoma City Thunder": "https://upload.wikimedia.org/wikipedia/it/5/5d/Oklahoma_City_Thunder.svg",
+        "Orlando Magic": "https://upload.wikimedia.org/wikipedia/it/b/bd/Orlando_Magic_logo2.svg",
+        "Philadelphia 76ers": "https://upload.wikimedia.org/wikipedia/it/6/68/Philadelphia_76ers_logo2.svg",
+        "Phoenix Suns": "https://cdn.nba.com/teams/uploads/sites/1610612756/2022/08/suns-logo.svg",
+        "Portland Trail Blazers": "https://upload.wikimedia.org/wikipedia/en/2/21/Portland_Trail_Blazers_logo.svg",
+        "Sacramento Kings": "https://upload.wikimedia.org/wikipedia/it/c/c7/SacramentoKings.svg",
+        "San Antonio Spurs": "https://upload.wikimedia.org/wikipedia/it/a/a2/San_Antonio_Spurs.svg",
+        "Toronto Raptors": "https://upload.wikimedia.org/wikipedia/it/e/e3/Toronto_Raptors_logo2.svg",
+        "Utah Jazz": "https://upload.wikimedia.org/wikipedia/it/0/04/Utah_Jazz_logo_%282016%29.svg",
+        "Washington Wizards": "https://upload.wikimedia.org/wikipedia/it/a/af/Washington_Wizards_logo2.svg"
     }
-    
     return logo_data
 
 
 # Funzione principale per la mappa
 def squadre():
-    st.title("Mappa delle Squadre NBA")
+    st.title("Sezione squadre")
+    st.write("")
 
     # Ottieni e processa i dati
     nba_data = get_nba_teams()
@@ -123,7 +128,7 @@ def squadre():
 
     # Tooltip e visualizzazione interattiva
     tooltip = {
-        "html": "<b>Squadra:</b> {full_name}",
+        "html": "{full_name}",
         "style": {
             "backgroundColor": "steelblue",
             "color": "white"
@@ -159,16 +164,12 @@ def squadre():
 
     # Streamlit layout
     st.pydeck_chart(deck)
+    st.write("")
     
-    st.image("Logos/cavs_logo.png")
     logo_data = get_logo_data()
-    for team_name, image_url in logo_data.items():
+    for team_name in logo_data:
         st.write(team_name)
-        # Carica l'immagine
-        img = load_image(image_url)
-            
-        # Mostra l'immagine della squadra
-        st.image(img, caption = team_name)
+        st.image(load_image(logo_data[team_name]))
         
     
     
