@@ -172,7 +172,7 @@ def squadre():
         st.image(load_image(logo_data[team_name]))
         
     
-    
+squadre()  
 
 
     

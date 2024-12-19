@@ -623,7 +623,7 @@ def giocatori():
                selected_season, shot_type, season_type_choice, game_segment, minutes_left)
     
     
-
+giocatori()
  
     
     
