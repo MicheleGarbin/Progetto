@@ -2,10 +2,9 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 from nba_api.stats.static import teams
+from nba_api.stats.endpoints import TeamDetails
 from PIL import Image
-import requests
-import io
-import cairosvg
+from icecream import ic
 
 
 # Funzione per ottenere i dati delle squadre NBA
@@ -55,28 +54,8 @@ def add_coordinates(data):
     return data
 
 
-# Questa funzione restituisce un'immagine presa da un link/path ridimensionata
-def load_image(svg_file):
-    # Tratto in maniera diversa i file svg che prendo da internet rispetto 
-    # a quelli che ho nella cartella locale Logos
-    if svg_file[0] == "h":
-        response = requests.get(svg_file)
-        svg_file = response.content
-    else:
-        with open(svg_file, "rb") as f:
-            svg_file = f.read()
-    # Converti l'SVG in PNG usando cairosvg
-    png_data = cairosvg.svg2png(bytestring = svg_file)
-    # Salvo il PNG in memoria con Pillow
-    image =  Image.open(io.BytesIO(png_data))
-    # Ottengo le dimensioni
-    width, height = image.size
-    ratio = width / height
-    # Restituisco l'immagine ridimensionata
-    return image.resize((150, int(150 / ratio)))
-
-
 # Questa funzione restituisce un dataframe con dentro gli url dei vari loghi 
+@st.cache_data
 def get_logo_data():
     logo_data = {
         "Atlanta Hawks": "https://upload.wikimedia.org/wikipedia/it/e/ee/Atlanta_Hawks_logo2.svg",
@@ -111,6 +90,114 @@ def get_logo_data():
         "Washington Wizards": "https://upload.wikimedia.org/wikipedia/it/a/af/Washington_Wizards_logo2.svg"
     }
     return logo_data
+
+
+# Questa funzione permette di ottenere tutte le statistiche generali
+# di una squadra selezionata dall'utente
+def get_info(selected_team, team_data):
+    logo_data = get_logo_data()
+    logo, description = st.columns(2)
+    selected_team_id = team_data["id"].item()
+    
+    # Ricavo le informazioni di background sulla squadra selezionata
+    background_team_info = TeamDetails(selected_team_id).team_background.get_data_frame()
+
+    # Inserisco sulla parte sinistra dello schermo il logo della squadra
+    logo.image(logo_data[selected_team], width = 300)
+    # Inserisco sulla parte destra dello schermo un elenco puntato con 
+    # alcune informazioni sulla squadra
+    description.markdown(
+        f"## {selected_team} ({team_data['abbreviation'].item()}) "
+        )
+    description.markdown(
+        f"- **Stato:** {team_data['state'].item()}\n" \
+        f"- **Anno di fondazione:** {team_data['year_founded'].item()}\n" \
+        f"- **Arena:** {background_team_info['ARENA'].item()} ({background_team_info['ARENACAPACITY'].item()} posti)\n" \
+        f"- **Proprietario:** {background_team_info['OWNER'].item()}\n" \
+        f"- **General Manager:** {background_team_info['GENERALMANAGER'].item()}\n" \
+        f"- **Allenatore:** {background_team_info['HEADCOACH'].item()}\n" \
+        f"- **Squadra D-League associata:** {background_team_info['DLEAGUEAFFILIATION'].item()}" 
+    )
+    
+    # Ottengo una breve descrizione della squadra
+    team_description(selected_team_id)
+    
+    # Inserisco dei link alla fine della pagina
+    nba_link = f"https://www.nba.com/{team_data['nickname'].item()}/"
+    wiki_link = f"https://it.wikipedia.org/wiki/{team_data['full_name'].item().replace(' ','_')}"
+    st.markdown("---")
+    st.markdown(f""" 
+        ### Altri link:
+        - **[NBA.com]({nba_link})**
+        - **[Wikipedia]({wiki_link})**
+        """
+    )
+
+
+# Questa funzione fornisce un breve riassunto della storia di 
+# una squadra dato in input l'id della squadra selezionata
+def team_description(selected_team_id):
+    # Mostro le informazioni sui campionati vinti
+    championship_data = TeamDetails(selected_team_id).team_awards_championships.get_data_frame()
+    team_rings = len(championship_data)
+    if team_rings == 0:
+        st.write("Questa squadra non ha ancora vinto un campionato")
+    else:
+        championship_trophy = "https://imagez.tmz.com/image/b5/o/2022/05/12/b56b50f62a67485baaf0c434cdf22504.jpg"
+        st.markdown(f" **Numero di campionati:** {team_rings}")
+        if team_rings > 12:
+            # Fanno eccezione i troppi campionati vinti da Celtics e Lakers
+            rings_columns = st.columns(6)
+            index = 0
+            while index < team_rings:
+                for i in range(6):
+                    if index >= team_rings:
+                        break
+                    with rings_columns[i]:
+                        st.image(championship_trophy, 
+                                caption = championship_data['YEARAWARDED'].iloc[index])
+                    index += 1
+                    
+                    
+        else:
+            rings_columns = st.columns(team_rings)
+            for i in range(team_rings):
+                with rings_columns[i]:
+                    st.image(championship_trophy, 
+                            caption = championship_data['YEARAWARDED'].iloc[i],
+                            width = 80)
+    
+    # Mostro i titoli di conference
+    conference_data = TeamDetails(selected_team_id).team_awards_conf.get_data_frame()
+    conference_titles = len(conference_data)
+    if conference_titles == 0:
+        st.write("Questa squadra non ha ancora vinto un trofeo di conference")
+    else:
+        st.markdown(f" **Numero di titoli di conference vinti:** {conference_titles}")
+        
+    # Mostro i titoli di divisione
+    division_data = TeamDetails(selected_team_id).team_awards_div.get_data_frame()
+    division_titles = len(division_data)
+    if division_titles == 0:
+        st.write("Questa squadra non ha ancora vinto un trofeo di conference")
+    else:
+        st.markdown(f" **Numero di titoli di divisione vinti:** {division_titles}")
+        
+    # Mostro i giocatori che sono stati eletti nella hall of fame
+    hof_data = TeamDetails(selected_team_id).team_hof.get_data_frame()
+    # Seleziono solo le colonne effettivamente interessanti
+    hof_data = hof_data[['PLAYER', 'POSITION', 'SEASONSWITHTEAM']]
+    # Rinomino la colonna 'SEASONWITHTHETEAM'
+    hof_data = hof_data.rename(columns = {'SEASONSWITHTEAM': 'SEASON WITH THE TEAM'})
+    # Convertire i valori della colonna 'YEAR' in numeri interi, rimuovendo le virgole
+    st.write(hof_data)
+    
+    
+
+# Questa funzione mostra le statistiche di tutti i giocatori di una squadra
+# secondo i vari parametri selezionati
+def get_team_stats():
+    pass
 
 
 # Funzione principale per la mappa
@@ -164,12 +251,26 @@ def squadre():
 
     # Streamlit layout
     st.pydeck_chart(deck)
+    
+    # L'utente seleziona la squadra manualmente
+    selected_team = st.selectbox("", nba_data["full_name"])
     st.write("")
     
-    logo_data = get_logo_data()
-    for team_name in logo_data:
-        st.write(team_name)
-        st.image(load_image(logo_data[team_name]))
+    # Creo delle diverse tab, una per mostrare le caratteristiche generali della 
+    # squadra selezionata, l'altra per mostrare le statistiche
+    
+    team_tabs = st.tabs(["Informazioni generali", "Statistiche"])
+    with team_tabs[0]:
+        # Filtro il dataframe per ottenere informazioni solamente
+        # sulla squadra selezionata
+        filtered_data = nba_data[nba_data["full_name"] == selected_team]
+        get_info(selected_team, filtered_data)
+    with team_tabs[1]:
+        get_team_stats()
+        
+    st.write(nba_data)
+    
+    
         
     
 squadre()  
