@@ -125,9 +125,8 @@ def get_info(selected_team, team_data):
     # Inserisco dei link alla fine della pagina
     nba_link = f"https://www.nba.com/{team_data['nickname'].item()}/"
     wiki_link = f"https://it.wikipedia.org/wiki/{team_data['full_name'].item().replace(' ','_')}"
-    st.markdown("---")
     st.markdown(f""" 
-        ### Altri link:
+        Altri link:
         - **[NBA.com]({nba_link})**
         - **[Wikipedia]({wiki_link})**
         """
@@ -144,7 +143,7 @@ def team_description(selected_team_id):
         st.write("Questa squadra non ha ancora vinto un campionato")
     else:
         championship_trophy = "https://imagez.tmz.com/image/b5/o/2022/05/12/b56b50f62a67485baaf0c434cdf22504.jpg"
-        st.markdown(f" **Numero di campionati:** {team_rings}")
+        st.markdown(f" **Numero di campionati vinti:** {team_rings}")
         if team_rings > 12:
             # Fanno eccezione i troppi campionati vinti da Celtics e Lakers
             rings_columns = st.columns(6)
@@ -171,7 +170,7 @@ def team_description(selected_team_id):
     conference_data = TeamDetails(selected_team_id).team_awards_conf.get_data_frame()
     conference_titles = len(conference_data)
     if conference_titles == 0:
-        st.write("Questa squadra non ha ancora vinto un trofeo di conference")
+        st.write("Questa squadra non ha ancora vinto un titolo di conference")
     else:
         st.markdown(f" **Numero di titoli di conference vinti:** {conference_titles}")
         
@@ -179,7 +178,7 @@ def team_description(selected_team_id):
     division_data = TeamDetails(selected_team_id).team_awards_div.get_data_frame()
     division_titles = len(division_data)
     if division_titles == 0:
-        st.write("Questa squadra non ha ancora vinto un trofeo di conference")
+        st.write("Questa squadra non ha ancora vinto un titolo di divisione")
     else:
         st.markdown(f" **Numero di titoli di divisione vinti:** {division_titles}")
         
@@ -188,10 +187,57 @@ def team_description(selected_team_id):
     # Seleziono solo le colonne effettivamente interessanti
     hof_data = hof_data[['PLAYER', 'POSITION', 'SEASONSWITHTEAM']]
     # Rinomino la colonna 'SEASONWITHTHETEAM'
-    hof_data = hof_data.rename(columns = {'SEASONSWITHTEAM': 'SEASON WITH THE TEAM'})
-    # Convertire i valori della colonna 'YEAR' in numeri interi, rimuovendo le virgole
-    st.write(hof_data)
+    hof_data = hof_data.rename(columns = {'SEASONSWITHTEAM': 'SEASONS WITH THE TEAM'})
+    hof_link = "https://it.wikipedia.org/wiki/Membri_del_Naismith_Memorial_Basketball_Hall_of_Fame"
+    st.markdown("---")
+    st.write(f"Elenco giocatori eletti nella Hall of Fame che hanno vestito \
+             la canotta della squadra selezionata:")
+    st.dataframe(hof_data, hide_index = True)
+    with st.expander(f"Clicca qui per avere maggiori informazioni \
+                     sulla Hall of Fame"):
+        st.write(f"L'Hall of Fame [(HOF)]({hof_link}) è un'istituzione che \
+                racchiude coloro che hanno lasciato un'impronta indelebile nella \
+                storia del basket mondiale. Questo onore non è destinato solamente \
+                a giocatori o allenatori, ma a chiunque abbia dato un contributo \
+                significativo a questo sport") 
     
+    # Mostro i giocatori per cui la squadra ha ritirato la maglia 
+    retired_jersey_data = TeamDetails(selected_team_id).team_retired.get_data_frame()
+    # Seleziono solo le colonne effettivamente interessanti
+    retired_jersey_data = retired_jersey_data[['PLAYER', 'POSITION',
+                                              'JERSEY', 'SEASONSWITHTEAM']]
+    # Rinomino la colonna 'SEASONWITHTHETEAM'
+    hof_data = hof_data.rename(columns = {'SEASONSWITHTEAM': 'SEASONS WITH THE TEAM'})
+    st.write("")
+    st.write("Elenco maglie ritirate della squadra selezionata:")
+    st.dataframe(retired_jersey_data, hide_index = True)
+    with st.expander(f"Clicca qui per avere maggiori informazioni sul ritiro \
+                     delle maglie"):
+        st.write(f"Il ritiro di una maglia da parte di una squadra NBA è uno dei \
+                massimi onori che una franchigia possa conferire a un giocatore. \
+                Quando una maglia viene ritirata, nessun altro giocatore di quella \
+                squadra può indossare il numero associato, come segno di rispetto \
+                e riconoscimento per il contributo straordinario del giocatore \
+                alla squadra e alla sua storia. Questo gesto non riguarda solo \
+                i giocatori, ma anche altre figure significative all’interno \
+                dell’organizzazione, come allenatori, dirigenti, o altre \
+                personalità che hanno avuto un impatto fondamentale. Può \
+                accadere che una squadra decida di ritirare un numero \
+                di maglia per omaggiare un giocatore che non ha mai \
+                giocato per tale squadra: l'esempio più lampante di ciò \
+                è il ritiro della maglia numero 23 di Michael Jordan \
+                da parte dei Miami Heat, squadra che Jordan ha affrontato \
+                solo da avversario. ")
+        
+    social_media_data = TeamDetails(selected_team_id).team_social_sites.get_data_frame()
+    st.markdown("---")
+    # Creo una lista di link per i vari social ufficiali della squadra selezionata
+    # Crea una lista di link con il formato desiderato
+    elenco_link = f"Link ai social network ufficiali della \
+                   squadra selezionata:\n"
+    for index, row in social_media_data.iterrows():
+        elenco_link += f"- [{row['ACCOUNTTYPE']}]({row['WEBSITE_LINK']})\n"
+    st.markdown(elenco_link)
     
 
 # Questa funzione mostra le statistiche di tutti i giocatori di una squadra
@@ -268,7 +314,7 @@ def squadre():
     with team_tabs[1]:
         get_team_stats()
         
-    st.write(nba_data)
+    
     
     
         
