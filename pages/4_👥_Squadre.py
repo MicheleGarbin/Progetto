@@ -2,7 +2,7 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 from nba_api.stats.static import teams
-from nba_api.stats.endpoints import TeamDetails
+from nba_api.stats.endpoints import TeamDetails, TeamYearByYearStats
 from PIL import Image
 from icecream import ic
 
@@ -242,8 +242,17 @@ def team_description(selected_team_id):
 
 # Questa funzione mostra le statistiche di tutti i giocatori di una squadra
 # secondo i vari parametri selezionati
-def get_team_stats():
-    pass
+def get_team_stats(selected_team_id):
+    # Recupero le statistiche anno per anno della squadra selezionata
+    team_data = TeamYearByYearStats(team_id = selected_team_id).team_stats.get_data_frame()
+    # Estraggo la colonna "YEAR" come lista di anni
+    years_list = team_data['YEAR'].values
+    selected_year = st.select_slider("Seleziona una stagione: ", options = years_list)
+    #selected_season_type = st.select
+    
+    # Inserisco una checkbox per permettere all'utente di fare i confronti
+    # tra squadre diverse di epoche diverse
+    compare_teams = st.checkbox("Clicca qui per paragonare squadre diverse")
 
 
 # Funzione principale per la mappa
@@ -304,7 +313,6 @@ def squadre():
     
     # Creo delle diverse tab, una per mostrare le caratteristiche generali della 
     # squadra selezionata, l'altra per mostrare le statistiche
-    
     team_tabs = st.tabs(["Informazioni generali", "Statistiche"])
     with team_tabs[0]:
         # Filtro il dataframe per ottenere informazioni solamente
@@ -312,7 +320,8 @@ def squadre():
         filtered_data = nba_data[nba_data["full_name"] == selected_team]
         get_info(selected_team, filtered_data)
     with team_tabs[1]:
-        get_team_stats()
+        selected_team_id = nba_data[nba_data["full_name"] == selected_team]["id"]
+        get_team_stats(selected_team_id)
         
     
     

@@ -19,7 +19,7 @@ from mplbasketball import Court
 # Questa funzione prende in input l'id di riconoscimento di un giocatore
 # e fornisce i dati relativi a tale giocatore
 def get_player_data(player_id):
-    player_data = playercareerstats.PlayerCareerStats(player_id=player_id)
+    player_data = playercareerstats.PlayerCareerStats(player_id = player_id)
     data = player_data.get_data_frames()[0]  # ottengo il primo dataframe
     return pl.DataFrame(data)  # converto in Polars
         
@@ -541,7 +541,6 @@ def hexmap(shot_chart_data, league_shot_chart_data, selected_player_name, select
 # tiro e altri parametri per produrre dei grafici intuitivi ma potenti a livello di informazione contenuta
 def giocatori():
     st.title("Sezione giocatori")
-    
     st.write("")
     
     # Ottengo un elenco di tutti i giocatori
