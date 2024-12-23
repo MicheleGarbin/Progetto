@@ -2,6 +2,7 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import polars as pl
+import altair as alt
 from nba_api.stats.static import teams
 from nba_api.stats.endpoints import TeamDetails, TeamYearByYearStats, TeamPlayerDashboard
 from PIL import Image
@@ -261,8 +262,7 @@ def team_stats(selected_team_id):
                                           "Per100Possessions", "Per100Plays"
                                           ]
                                          )
-    pace_adjust = st.checkbox("Clicca qui per aggiustare il pace")
-    if pace_adjust:
+    if st.checkbox("Clicca qui per aggiustare il pace"):
         pace_adjust = "Y"
     else:
         pace_adjust = "N"
@@ -296,6 +296,39 @@ def team_stats(selected_team_id):
         with team2:
             view_team_stats(selected_other_team_id, selected_other_year, 
                             selected_season_type, selected_per_mode, pace_adjust)
+            
+        # Costruisco un grafico a barre affiancate che mi permetta 
+        # di comparare i valori delle due squadre per 5 categorie principali
+        team_dashboard = TeamPlayerDashboard(team_id = selected_team_id, 
+                                             season = selected_year, 
+                                             season_type_all_star = selected_season_type,
+                                             per_mode_detailed = selected_per_mode, 
+                                             pace_adjust = pace_adjust
+                                             ).team_overall.get_data_frame() 
+        other_team_dashboard = TeamPlayerDashboard(team_id = selected_other_team_id, 
+                                             season = selected_other_year, 
+                                             season_type_all_star = selected_season_type,
+                                             per_mode_detailed = selected_per_mode, 
+                                             pace_adjust = pace_adjust
+                                             ).team_overall.get_data_frame() 
+        if team_dashboard.empty or other_team_dashboard.empty:
+            st.write("Non si hanno abbastanza dati per confrontare le due squadre scelte")
+            st.info(f"Selezionare dei parametri per cui si possono ottenere \
+                     i dati richiesti")
+        else:
+            combined_team_dashboard = pd.concat([team_dashboard, other_team_dashboard], 
+                                                axis = 0, ignore_index = True)
+            # Rimuovo le colonne che non mi interessano
+            columns_to_remove = combined_team_dashboard.loc[:, "GROUP_SET":"GROUP_VALUE"].columns.tolist() + \
+                    combined_team_dashboard.loc[:, "GP_RANK":].columns.tolist()
+            combined_team_dashboard = combined_team_dashboard.drop(columns = columns_to_remove)
+            # Creo un elenco delle possibili metriche selezionabili
+            possible_metric = combined_team_dashboard.columns.tolist()
+            # Faccio scegliere all'utente le metriche
+            metric_choice = st.multiselect("Scegli una o più categorie per il confronto",
+                                           possible_metric)
+            
+        
     else:
         view_team_stats(selected_team_id, selected_year, selected_season_type,
                     selected_per_mode, pace_adjust)
@@ -312,7 +345,9 @@ def view_team_stats(selected_team_id, selected_year, selected_season_type,
                                             ).players_season_totals.get_data_frame()
     if players_dashboard.empty:
         st.write("Le statistiche richieste non sono disponibili")
-        st.info("Prova a selezionare un anno più recente")
+        st.info(f"Prova a selezionare un anno più recente oppure \
+                assicurati che la squadra selezionata abbia giocato \
+                quella fase della stagione")
     else:
         st.write("Statistiche dei vari giocatori: ")
         # Trasformo il dataframe pandas in un dataframe polars per poterlo
@@ -325,6 +360,25 @@ def view_team_stats(selected_team_id, selected_year, selected_season_type,
         columns_to_remove = players_dashboard.columns[idx:]
         players_dashboard = players_dashboard.drop(columns_to_remove)
         st.write(players_dashboard)
+        
+        st.write("")
+        
+        st.write("Statistiche aggregate di squadra: ")
+        # Per il motivo visto sopra, utilizzo un dataframe polars
+        team_overall_dashboard = pl.from_pandas(TeamPlayerDashboard(
+            team_id = selected_team_id, season = selected_year, 
+            season_type_all_star = selected_season_type,
+            per_mode_detailed = selected_per_mode, 
+            pace_adjust = pace_adjust
+            ).team_overall.get_data_frame()
+        )
+        # Anche in questo caso rimuovo le colonne poco interessanti
+        columns_to_remove = ["GROUP_SET", "TEAM_ID", "GROUP_VALUE"]
+        team_overall_dashboard = team_overall_dashboard.drop(columns_to_remove)
+        gp_rank_idx = team_overall_dashboard.columns.index("GP_RANK")
+        columns_to_remove = team_overall_dashboard.columns[gp_rank_idx:]
+        team_overall_dashboard = team_overall_dashboard.drop(columns_to_remove)
+        st.write(team_overall_dashboard)
 
 
 # Funzione principale per la mappa
