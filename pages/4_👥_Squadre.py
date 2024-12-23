@@ -1,8 +1,9 @@
 import streamlit as st
 import pydeck as pdk
 import pandas as pd
+import polars as pl
 from nba_api.stats.static import teams
-from nba_api.stats.endpoints import TeamDetails, TeamYearByYearStats
+from nba_api.stats.endpoints import TeamDetails, TeamYearByYearStats, TeamPlayerDashboard
 from PIL import Image
 from icecream import ic
 
@@ -94,7 +95,7 @@ def get_logo_data():
 
 # Questa funzione permette di ottenere tutte le statistiche generali
 # di una squadra selezionata dall'utente
-def get_info(selected_team, team_data):
+def team_info(selected_team, team_data):
     logo_data = get_logo_data()
     logo, description = st.columns(2)
     selected_team_id = team_data["id"].item()
@@ -242,17 +243,88 @@ def team_description(selected_team_id):
 
 # Questa funzione mostra le statistiche di tutti i giocatori di una squadra
 # secondo i vari parametri selezionati
-def get_team_stats(selected_team_id):
+def team_stats(selected_team_id):
     # Recupero le statistiche anno per anno della squadra selezionata
     team_data = TeamYearByYearStats(team_id = selected_team_id).team_stats.get_data_frame()
     # Estraggo la colonna "YEAR" come lista di anni
     years_list = team_data['YEAR'].values
     selected_year = st.select_slider("Seleziona una stagione: ", options = years_list)
-    #selected_season_type = st.select
-    
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_season_type = st.selectbox("Seleziona il tipo di stagione: ",
+                                            ["Regular Season", "Playoffs"])
+    with col2:
+        selected_per_mode = st.selectbox("Seleziona il PerMode: ",
+                                         ["Totals", "PerGame", "MinutesPer",
+                                          "Per48", "Per40", "Per36", "PerMinute",
+                                          "PerPossession", "PerPlay",
+                                          "Per100Possessions", "Per100Plays"
+                                          ]
+                                         )
+    pace_adjust = st.checkbox("Clicca qui per aggiustare il pace")
+    if pace_adjust:
+        pace_adjust = "Y"
+    else:
+        pace_adjust = "N"
+    with st.expander("Clicca qui per avere maggiori informazioni sul pace: "):
+        st.write(f"Il Pace rappresenta il numero medio di possessi giocati \
+                 da una squadra in 48 minuti (la durata di una partita \
+                 regolamentare nell’NBA). Le squadre con un pace più alto \
+                 tendono ad accumulare più punti, rimbalzi, assist e così via \
+                 poichè giocano più possessi. Normalizzare tutte \
+                 queste statistiche riportandosi alle medie per possesso \
+                 è essenziale per confrontare squadre diverse")
+        
     # Inserisco una checkbox per permettere all'utente di fare i confronti
     # tra squadre diverse di epoche diverse
     compare_teams = st.checkbox("Clicca qui per paragonare squadre diverse")
+    if compare_teams:
+        nba_data = get_nba_teams()
+        # Faccio scegliere all'utente l'altra squadra
+        selected_other_team = st.selectbox("Seleziona la seconda squadra da visualizzare: ",
+                                           nba_data["full_name"])
+        # Faccio scegliere all'utente l'anno di riferimento per la 
+        # seconda squadra, in modo da poter fare confronti con 
+        # squadre di epoche diverse
+        selected_other_year = st.selectbox("Seleziona l'anno di riferimento per la seconda squadra: ",
+                                           years_list)
+        selected_other_team_id = nba_data[nba_data["full_name"] == selected_other_team]["id"]
+        team1, team2 = st.columns(2)
+        with team1:
+            view_team_stats(selected_team_id, selected_year, selected_season_type,
+                    selected_per_mode, pace_adjust)
+        with team2:
+            view_team_stats(selected_other_team_id, selected_other_year, 
+                            selected_season_type, selected_per_mode, pace_adjust)
+    else:
+        view_team_stats(selected_team_id, selected_year, selected_season_type,
+                    selected_per_mode, pace_adjust)
+        
+
+def view_team_stats(selected_team_id, selected_year, selected_season_type,
+                    selected_per_mode, pace_adjust):
+    st.markdown("---")
+    players_dashboard = TeamPlayerDashboard(team_id = selected_team_id, 
+                                            season = selected_year, 
+                                            season_type_all_star = selected_season_type,
+                                            per_mode_detailed = selected_per_mode, 
+                                            pace_adjust = pace_adjust
+                                            ).players_season_totals.get_data_frame()
+    if players_dashboard.empty:
+        st.write("Le statistiche richieste non sono disponibili")
+        st.info("Prova a selezionare un anno più recente")
+    else:
+        st.write("Statistiche dei vari giocatori: ")
+        # Trasformo il dataframe pandas in un dataframe polars per poterlo
+        # rappresentare senza gli indici delle varie osservazioni presenti
+        # nella prima colonna. Rimuovo le colonne poco interessanti
+        players_dashboard = pl.from_pandas(players_dashboard)
+        columns_to_remove = ["GROUP_SET", "PLAYER_ID", "NICKNAME", "NBA_FANTASY_PTS"]
+        players_dashboard = players_dashboard.drop(columns_to_remove)
+        idx = players_dashboard.columns.index("WNBA_FANTASY_PTS")
+        columns_to_remove = players_dashboard.columns[idx:]
+        players_dashboard = players_dashboard.drop(columns_to_remove)
+        st.write(players_dashboard)
 
 
 # Funzione principale per la mappa
@@ -318,10 +390,10 @@ def squadre():
         # Filtro il dataframe per ottenere informazioni solamente
         # sulla squadra selezionata
         filtered_data = nba_data[nba_data["full_name"] == selected_team]
-        get_info(selected_team, filtered_data)
+        team_info(selected_team, filtered_data)
     with team_tabs[1]:
         selected_team_id = nba_data[nba_data["full_name"] == selected_team]["id"]
-        get_team_stats(selected_team_id)
+        team_stats(selected_team_id)
         
     
     
