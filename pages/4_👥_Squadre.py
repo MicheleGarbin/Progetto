@@ -322,7 +322,7 @@ def team_stats(selected_team_id):
             columns_to_remove = ["GROUP_SET", "TEAM_ID"] + combined_team_dashboard.loc[:, "GP_RANK":].columns.tolist()
             combined_team_dashboard = combined_team_dashboard.drop(columns = columns_to_remove)
             # Creo un elenco delle possibili metriche selezionabili
-            possible_metric = combined_team_dashboard.columns.tolist()
+            possible_metric = combined_team_dashboard.columns.tolist()[2:]
             # Faccio scegliere all'utente le metriche
             metric_choice = st.multiselect("Scegli una o più categorie per il confronto",
                                            possible_metric)
@@ -387,13 +387,39 @@ def view_team_stats(selected_team_id, selected_year, selected_season_type,
 
 
 def faceting(combined_team_dashboard, metric_choice, selected_season_type, selected_per_mode):
+    # Seleziono solo le colonne che mi interessano
+    combined_team_dashboard = combined_team_dashboard[["TEAM_NAME", "GROUP_VALUE"] + metric_choice]
     # Aggiungo una colonna in cui indico il colore della barra di ciascuna squadra
     combined_team_dashboard["COLOR"] = ["#FF8C00", "#1E90FF"] 
-    first_team = combined_team_dashboard["TEAM_NAME"].iloc[0]
-    second_team = combined_team_dashboard["TEAM_NAME"].iloc[1]
-    first_season = combined_team_dashboard["GROUP_VALUE"].iloc[0]
-    second_season = combined_team_dashboard["GROUP_VALUE"].iloc[1]
+    # Trasformo il dataframe combinato delle due squadre per utilizzare il faceting
+    combined_team_dashboard = pd.melt(
+        combined_team_dashboard, 
+        id_vars=[col for col in combined_team_dashboard.columns if col not in metric_choice], 
+        value_vars=metric_choice,  # Colonne da trasformare
+        var_name="METRIC",  # Nome della nuova colonna per i nomi delle metriche
+        value_name="VALUES"  # Nome della nuova colonna per i valori
+    )
     st.write(combined_team_dashboard)
+    chart = (
+        alt.Chart(combined_team_dashboard)
+        .mark_bar()
+        .encode(
+            alt.X("TEAM_NAME:N"),  # Asse x con i nomi delle squadre
+            alt.Y("VALUES:Q", title="Values"),  # Asse y con i valori
+            #alt.Color("COLOR:N", legend=None),  # Colore basato sulla colonna 'COLOR'
+            #alt.Tooltip(["TEAM_NAME", "GROUP_VALUE", "VALUES"]) # Tooltip interattivi
+        )
+        .properties(
+            width = 100,
+            height = 100
+        )
+        .facet(
+            "METRIC:N",
+            columns = 3,
+            bounds = "flush"
+        )
+    )
+    st.altair_chart(chart)
     
 
 # Funzione principale per la mappa
