@@ -319,21 +319,26 @@ def team_stats(selected_team_id):
             combined_team_dashboard = pd.concat([team_dashboard, other_team_dashboard], 
                                                 axis = 0, ignore_index = True)
             # Rimuovo le colonne che non mi interessano
-            columns_to_remove = combined_team_dashboard.loc[:, "GROUP_SET":"GROUP_VALUE"].columns.tolist() + \
-                    combined_team_dashboard.loc[:, "GP_RANK":].columns.tolist()
+            columns_to_remove = ["GROUP_SET", "TEAM_ID"] + combined_team_dashboard.loc[:, "GP_RANK":].columns.tolist()
             combined_team_dashboard = combined_team_dashboard.drop(columns = columns_to_remove)
             # Creo un elenco delle possibili metriche selezionabili
             possible_metric = combined_team_dashboard.columns.tolist()
             # Faccio scegliere all'utente le metriche
             metric_choice = st.multiselect("Scegli una o più categorie per il confronto",
                                            possible_metric)
-            
+            if metric_choice:
+                # Mostro all'utente una serie di grafici in cui confronto i punteggi delle
+                # due squadre in base alle metriche selezionate
+                faceting(combined_team_dashboard, metric_choice,
+                         selected_season_type, selected_per_mode)
         
     else:
         view_team_stats(selected_team_id, selected_year, selected_season_type,
                     selected_per_mode, pace_adjust)
         
 
+# Questa funzione permette di visualizzare le statistiche individuali
+# e aggregate delle squadra selezionata in base a vari parametri
 def view_team_stats(selected_team_id, selected_year, selected_season_type,
                     selected_per_mode, pace_adjust):
     st.markdown("---")
@@ -380,6 +385,16 @@ def view_team_stats(selected_team_id, selected_year, selected_season_type,
         team_overall_dashboard = team_overall_dashboard.drop(columns_to_remove)
         st.write(team_overall_dashboard)
 
+
+def faceting(combined_team_dashboard, metric_choice, selected_season_type, selected_per_mode):
+    # Aggiungo una colonna in cui indico il colore della barra di ciascuna squadra
+    combined_team_dashboard["COLOR"] = ["#FF8C00", "#1E90FF"] 
+    first_team = combined_team_dashboard["TEAM_NAME"].iloc[0]
+    second_team = combined_team_dashboard["TEAM_NAME"].iloc[1]
+    first_season = combined_team_dashboard["GROUP_VALUE"].iloc[0]
+    second_season = combined_team_dashboard["GROUP_VALUE"].iloc[1]
+    st.write(combined_team_dashboard)
+    
 
 # Funzione principale per la mappa
 def squadre():
