@@ -330,7 +330,7 @@ def team_stats(selected_team_id):
                 # Mostro all'utente una serie di grafici in cui confronto i punteggi delle
                 # due squadre in base alle metriche selezionate
                 faceting(combined_team_dashboard, metric_choice,
-                         selected_season_type, selected_per_mode)
+                         selected_season_type, selected_per_mode, pace_adjust)
         
     else:
         view_team_stats(selected_team_id, selected_year, selected_season_type,
@@ -386,11 +386,13 @@ def view_team_stats(selected_team_id, selected_year, selected_season_type,
         st.write(team_overall_dashboard)
 
 
-def faceting(combined_team_dashboard, metric_choice, selected_season_type, selected_per_mode):
+def faceting(combined_team_dashboard, metric_choice, selected_season_type, selected_per_mode, pace_adjust):
     # Seleziono solo le colonne che mi interessano
     combined_team_dashboard = combined_team_dashboard[["TEAM_NAME", "GROUP_VALUE"] + metric_choice]
     # Aggiungo una colonna in cui indico il colore della barra di ciascuna squadra
     combined_team_dashboard["COLOR"] = ["#FF8C00", "#1E90FF"] 
+    # Aggiungo una colonna per la legenda che utilizzerò in seguito
+    combined_team_dashboard["LEGEND"] = combined_team_dashboard["TEAM_NAME"] + " (" + combined_team_dashboard["GROUP_VALUE"] + ")"
     # Trasformo il dataframe combinato delle due squadre per utilizzare il faceting
     combined_team_dashboard = pd.melt(
         combined_team_dashboard, 
@@ -399,30 +401,58 @@ def faceting(combined_team_dashboard, metric_choice, selected_season_type, selec
         var_name="METRIC",  # Nome della nuova colonna per i nomi delle metriche
         value_name="VALUES"  # Nome della nuova colonna per i valori
     )
-    st.write(combined_team_dashboard)
+    
+    # Costruiamo i grafici effettivi sfruttando il faceting
     chart = (
         alt.Chart(combined_team_dashboard)
         .mark_bar()
         .encode(
-            alt.X("TEAM_NAME:N"),  # Asse x con i nomi delle squadre
-            alt.Y("VALUES:Q", title="Values"),  # Asse y con i valori
-            #alt.Color("COLOR:N", legend=None),  # Colore basato sulla colonna 'COLOR'
-            #alt.Tooltip(["TEAM_NAME", "GROUP_VALUE", "VALUES"]) # Tooltip interattivi
+            alt.X("GROUP_VALUE:N", title = None, 
+                  axis = alt.Axis(title = None, labels = False)
+                  ),  
+            alt.Y("VALUES:Q", title = None), 
+            alt.Color("LEGEND:N",
+                      legend = alt.Legend(title = f"{selected_season_type} | {selected_per_mode} "),
+                      scale = alt.Scale(
+                                range = ["#FF8C00", "#1E90FF"]
+                                )
+                      ),  
+            alt.Tooltip("VALUES:Q") 
         )
         .properties(
             width = 100,
             height = 100
         )
         .facet(
-            "METRIC:N",
-            columns = 3,
-            bounds = "flush"
+            facet = alt.Facet("METRIC:N", header = alt.Header(title = None)),
+            columns = 3
         )
     )
     st.altair_chart(chart)
     
+    # Riportiamo delle raccomandazioni
+    if pace_adjust == "Y":
+        st.write("""
+                 Alcune raccomandazioni per interpretare al meglio questi grafici:
+                 - Il pace è stato aggiustato per eliminare gli effetti delle variazioni nel ritmo di gioco
+                 - Non è consigliabile visualizzare grafici vicini in cui, ad esempio, \
+                    si ha i punti totali da una parte e le vittorie o, ancora peggio, \
+                    la percentuale al tiro dall'altra. Per un'immediata interpretazione è utile \
+                    selezionare delle metriche aventi una scala simile
+                 """)
+    else:
+        st.write("""
+                 Alcune raccomandazioni per interpretare al meglio questi grafici:
+                 - Il pace non è stato aggiustato, per cui i valori mostrati si riferiscono a un \
+                     diverso numero di possessi 
+                 - Non è consigliabile visualizzare grafici vicini in cui, ad esempio, \
+                    si ha i punti totali da una parte e le vittorie o, ancora peggio, \
+                    la percentuale al tiro dall'altra. Per un'immediata interpretazione è utile \
+                    selezionare delle metriche aventi una scala simile
+                 """)
+    
 
-# Funzione principale per la mappa
+# Funzione principale della pagina
 def squadre():
     st.title("Sezione squadre")
     st.write("")
@@ -489,10 +519,6 @@ def squadre():
     with team_tabs[1]:
         selected_team_id = nba_data[nba_data["full_name"] == selected_team]["id"]
         team_stats(selected_team_id)
-        
-    
-    
-    
         
     
 squadre()  
