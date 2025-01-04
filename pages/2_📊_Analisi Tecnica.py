@@ -25,7 +25,8 @@ def get_player_id(player_list):
     return player_id_list
 
 
-@st.cache_data
+# Questa funzione mostra l'analisi della PCA per il confronto dei top player 
+# di due stagioni distinte
 def pca_analysis():
     st.title("Analisi delle componenti principali")
     
@@ -302,7 +303,7 @@ def pca_analysis():
                   """)
     
     
-    
+  
 def simpson_paradox():
     st.write("Ciao")
 
