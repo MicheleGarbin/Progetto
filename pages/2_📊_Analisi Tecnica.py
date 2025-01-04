@@ -26,7 +26,27 @@ def get_player_id(player_list):
 
 
 @st.cache_data
-def group_analysis():
+def pca_analysis():
+    st.title("Analisi delle componenti principali")
+    
+    st.write("")
+    
+    st.markdown("""
+                La PCA (Analisi delle Componenti Principali) è una tecnica 
+                statistica utilizzata per ridurre la dimensionalità di un 
+                dataset, preservandone al contempo la maggior parte della varianza,
+                e quindi dell'informazione.\n\nIn questo caso, per le stagioni 
+                2003-04 e 2023-24, sono stati presi i dati sui tiri da 6 diverse zone 
+                di tiro: Restricted Area, nel pitturato ma non Restricted Area, 
+                mid-range, triple dall'angolo sinistro, triple dall'angolo destro, 
+                triple non dall'angolo. Per ogni zona si conoscono i tiri segnati, 
+                i tiri tentati e la percentuale di tiri assistiti.\n\nI dataframe di 
+                riferimento hanno 19 colonne (6 zone di tiro per 3 metriche 
+                registrate più una colonna che indica la posizione del giocatore); 
+                nelle righe troviamo una quindicina di giocatori tra i più impattanti 
+                e influenti di ciascuna stagione.\n\nI grafici sottostanti rappresentano 
+                i punteggi delle prime due componenti principali; sopra ciascun punto 
+                è indicato il ruolo del giocatore.""")
     seasons = ["2003-04", "2023-24"]  # Modifica con la stagione desiderata
 
     # Siccome l'nba_api ha dei limiti per le troppe richieste, cerco di 
@@ -179,26 +199,107 @@ def group_analysis():
     df_season_2_pca.insert(0, "POSITION", df_season_2["POSITION"])
     
     # Disegniamo i biplot per le due stagioni considerate
-    fig, ax = plt.subplots(figsize = (8, 6))
-    ax.scatter(df_season_1_pca['PC1'], df_season_1_pca['PC2'], color = 'blue')
-    for i, label in enumerate(df_season_1_pca["POSITION"]):
-        ax.annotate(label, (df_season_1_pca['PC1'][i], df_season_1_pca['PC2'][i]),
-                    textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
-    ax.set_xlabel('Componente principale 1 (PC1)')
-    ax.set_ylabel('Componente principale 2 (PC2)')
-    ax.set_title('Stagione 2003-2004')
-    st.pyplot(fig)
-    fig, ax = plt.subplots(figsize = (8, 6))
-    ax.scatter(df_season_2_pca['PC1'], df_season_2_pca['PC2'], color = 'blue')
-    for i, label in enumerate(df_season_2_pca['POSITION']):
-        ax.annotate(label, (df_season_2_pca['PC1'][i], df_season_2_pca['PC2'][i]),
-                    textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
-    ax.set_xlabel('Componente principale 1 (PC1)')
-    ax.set_ylabel('Componente principale 2 (PC2)')
-    ax.set_title('Stagione 2023-2024')
-    st.pyplot(fig)    
-    # Mi ricavo la matrice dei loadings per le rispettive PC
-    st.write(pca_season_1.components_[:2])
+    col1, col2 = st.columns(2)
+    with col1:
+        fig, ax = plt.subplots(figsize = (8, 6))
+        ax.scatter(df_season_1_pca['PC1'], df_season_1_pca['PC2'], color = 'blue')
+        for i, label in enumerate(df_season_1_pca["POSITION"]):
+            ax.annotate(label, (df_season_1_pca['PC1'][i], df_season_1_pca['PC2'][i]),
+                        textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
+        ax.set_xlabel('Componente principale 1 (PC1)')
+        ax.set_ylabel('Componente principale 2 (PC2)')
+        ax.set_title('Stagione 2003-2004')
+        st.pyplot(fig)
+    with col2:
+        fig, ax = plt.subplots(figsize = (8, 6))
+        ax.scatter(df_season_2_pca['PC1'], df_season_2_pca['PC2'], color = 'blue')
+        for i, label in enumerate(df_season_2_pca['POSITION']):
+            ax.annotate(label, (df_season_2_pca['PC1'][i], df_season_2_pca['PC2'][i]),
+                        textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
+        ax.set_xlabel('Componente principale 1 (PC1)')
+        ax.set_ylabel('Componente principale 2 (PC2)')
+        ax.set_title('Stagione 2023-2024')
+        st.pyplot(fig)    
+    st.markdown("""
+                Coloro che riportano punteggi distanti 
+                dagli altri sono Kevin Garnett e Giannis Antetokounmpo. 
+                Essi hanno rivoluzionato il ruolo di ala grande ridefinendolo 
+                come una posizione versatile e dinamica, capace di eccellere su 
+                entrambi i lati del campo. Hanno combinato fisicità, atletismo 
+                e intelligenza cestistica, distinguendosi come difensori dominanti 
+                e playmaker non convenzionali, rompendo l'idea di 
+                un’ala grande confinata nel pitturato.  
+                """)
+    # Mi ricavo la matrice dei loadings per le rispettive PC; converto la 
+    # matrice dei loadings (che è un np.array) in un dataframe Pandas per 
+    # rinominare le colonne per un'immediata visualizzazione su streamlit
+    st.markdown("""
+                Di seguito sono riportate le matrici dei loadings, ovvero 
+                le matrici dei pesi associati a ciascuna variabile nella 
+                costruzione delle componenti principali:
+                """)
+    
+    st.write("")
+    
+    loadings_season_1 = pd.DataFrame(pca_season_1.components_[:2], 
+                                     columns = df_season_1.columns[1:])
+    loadings_season_2 = pd.DataFrame(pca_season_2.components_[:2], 
+                                     columns = df_season_2.columns[1:])
+    st.write(loadings_season_1)
+    st.markdown("""
+                - la PC1 riguarda soprattutto i tiri dal pitturato e i tiri da 3 punti
+                - la PC2 dà importanza ai tiri dal midrange e ai tiri assistiti dalla RA
+                
+                In quel periodo i lunghi non si prendevano molti tiri da tre; ad esempio, 
+                Yao Ming, Shaq e Ben Wallace (3 giocatori indotti nella HOF) hanno segnato 
+                in totale 8 tiri da 3 punti in tutta la loro carriera. Per questo motivo le
+                guardie hanno un punteggio più alto per la prima PC. Inoltre i pesi per
+                le metriche sul pitturato sono negativi, per cui i lunghi, che 
+                utilizzavano molto di più quei tipi di tiro, hanno un punteggio 
+                più basso.
+                """)
+    
+    st.write("")
+    
+    st.write(loadings_season_2)
+    st.markdown("""
+                - l'interpretazione della PC1 è molto simile al caso sopra
+                - la PC2 riguarda i tiri assistiti
+                
+                Le due guardie con il punteggio per la PC2 più alto sono 
+                Steph Curry e De'Aaron Fox, due playmaker capaci di crearsi
+                tiri dal palleggio, ma parte di squadre che giocano un basket molto simile,
+                fatto di movimento continuo che genera buoni tiri assistiti.
+                Non è un caso che, nonostante siano i portatori di palla primari, 
+                registrino un numero di assist relativamente basso e siano dei veri e propri 
+                scorer. 
+                """)
+    st.markdown("---")
+    st.markdown("""
+                ### Considerazioni finali e possibili ampliamenti:
+                - per i limiti di utilizzo dell'API si sono potuti prendere in 
+                  considerazione solamente 15 giocatori per stagione; in questo caso
+                  sono stati scelti i giocatori più impattanti per considerare un 
+                  volume di tiri maggiore. E' il caso di considerare anche i role
+                  player e i panchinari per avere una visione più generale
+                  
+                - se i dati degli anni '80-'90 fossero disponibili sarebbe interessante
+                  un confronto con le stagioni più recenti, magari per evidenziare il distacco
+                  ancora più netto tra le due filosofie di basket
+                  
+                - utilizzando delle statistiche avanzate non facilmente accessibili,
+                  si può utilizzare il metodo delle k-medie o un metodo gerarchico per 
+                  individuare dei gruppi tra i dati. Ad esempio, considerando i post-up 
+                  (quando un giocatore si posiziona in post basso), gli isolamenti, il
+                  numero di possessi e la shot - selection, si può mostrare
+                  come l'evoluzione del gioco abbia reso i ruoli tradizionali meno rigidi.
+                  L'idea è che attribuendo dei punteggi (tramite le PCA ad esempio), i giocatori
+                  di 20 anni fa siano facilmente raggruppabili in quei cluster che corrispondono
+                  quasi esattamente al loro ruolo effettivo; se si fa lo stesso sui giocatori odierni
+                  risulta molto difficile assegnare un ruolo a un giocatore, poichè al giorno d'oggi
+                  a ogni giocatore viene richiesto di saper fare tante cose diverse, e non 
+                  si riesce quasi mai ad associarlo a una sola delle 5 posizioni originali
+                  """)
     
     
     
@@ -219,7 +320,7 @@ def analisi_tecnica():
     st.markdown("---")
     
     if button1:
-        group_analysis()
+        pca_analysis()
     if button2:
         simpson_paradox()
         
