@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
+import numpy as np
 from nba_api.stats.endpoints import LeagueLeaders
-from nba_api.stats.static import teams
+from sklearn.linear_model import LinearRegression
 
 
 st.set_page_config(
@@ -243,18 +245,96 @@ st.markdown("""
             difficilmente diminuiranno.
             """)
 
+st.write("")
 # Ricavo il numero di tiri da tre tentati da ogni squadra nella lega
 # Creo un elenco delle stagioni da considerare
 season_list = []
 for i in range(1979, 2024):
     season = f"{i}-{i + 1}"
     season_list.append(season[:5] + season[7:])
-st.write(season_list)
-# Mi ricavo il numero di tiri da tre tentati da ogni giocatore
-# in una specifica stagione
+# Creo una lista vuota dove ciascun elemento mi rappresenta il numero di
+# tiri tentati in una determinata stagione; siccome questi dati servono per
+# un grafico che viene sempre mostrato, me li salvo in un file a parte
+# per evitare di fare 45 chiamate ogni volta all'API. Di seguito è riportata
+# la procedura che ha portato alla creazione del file con i suddetti dati
+if False:
+    three_point_volume = []
+    for season in season_list:
+        # Ricavo i leader per ogni statistica della lega, in sostanza 
+        # un elenco completo dei giocatori con i rispettivi valori
+        # per le metriche principali, tra cui il numero di tiri da tre tentati
+        league_leaders = LeagueLeaders(season = season).league_leaders.get_data_frame()
+        # Mi salvo nella lista complessiva il numero di tiri da tre tentati in
+        # una certa stagione, ovvero la somma dei tiri da tre tentati da 
+        # ciascun giocatore
+        three_point_volume.append(league_leaders["FG3A"].sum())
+    file_name = "data/three_point_volume.txt"
+    with open(file_name, "w") as file:
+        for elemento in three_point_volume:
+            file.write(str(elemento) + "\n")
+# Salvo in una lista le informazioni sui tiri da tre punti tentati
+# nella varie stagioni contenute in data/three_point_volume
+with open("data/three_point_volume.txt", "r") as file:
+    three_point_volume = [int(line.strip()) for line in file.readlines()]
+# Salvo in un dataframe le varie stagioni e il numero di tiri da tre tentati 
+# in ciascuna di queste
+three_point_volume = pd.DataFrame({
+    "Stagione": season_list,
+    "3PFGA": three_point_volume
+})
 
+# Preparazione dei dati per la regressione
+# Converto l'asse x (stagioni) in numeri per la regressione
+x = np.array(range(len(three_point_volume))).reshape(-1, 1)
+y = three_point_volume["3PFGA"]  
+model = LinearRegression()
+model.fit(x, y)
+# Predizione dei valori di y con il modello
+three_point_volume["Previsione"] = model.predict(x)
+# Estrazione di R^2 (indice della bontà d'adattamento)
+r_squared = model.score(x, y)
 
+chart = (
+    alt.Chart(three_point_volume)
+    .mark_line(point = True, color = "#00FF00")  
+    .encode(
+        x = alt.X("Stagione:N", axis = alt.Axis(title = "🟢 Valori osservati\t\t\t\t🟡 Retta di regressione stimata")),  
+        y = alt.Y("3PFGA:Q", title = "Tiri da 3 punti tentati"),
+        tooltip = ["Stagione", "3PFGA"]
+    )
+    .properties(
+        title = f"Tiri da tre punti tentati per ogni stagione (R² = {r_squared:.2f})"
+    )
+)
+regression_line = (
+    alt.Chart(three_point_volume)
+    .mark_line(strokeDash = [5, 5], color = "#FFFF00")
+    .encode(
+        x = alt.X("Stagione:N", title = ""),
+        y = alt.Y("Previsione:Q", title = "")
+    )
+)
+st.altair_chart(chart + regression_line, use_container_width = True)
 
+st.markdown("""
+            Il trend è visibilmente lineare e positivo; l'adattamento
+            secondo R - quadro è molto buono. Emergono
+            tuttavia dei punti "anomali", per i quali serve 
+            fare alcune precisazioni:
+            - nelle stagioni 1995-96 e 1996-97 la NBA diminuì la 
+              distanza della linea da tre di 54 cm; questo portò molti
+              più giocatori ad utilizzare il tiro oltre l'arco. Dal 1998 
+              la distanza tornò ad essere 7.24 metri e il valore osservato
+              segue il trend generale.
+            - l'inizio della stagione 1998-99 fu posticipato 
+              per uno sciopero generale dei giocatori; le squadre giocarono
+              32 partite in meno di Regular Season.
+            - nella stagione 2011-12 fu indetto uno nuovo sciopero dei giocatori:
+              le partite giocate furono solamente 66.
+            - a causa del covid da marzo 2020 a luglio 2020 non si giocò
+              nessuna partita; nella stagione 2019-20 e in quella successiva
+              le squadre giocarono almeno 72 partite per stagione.
+            """)
 
 
 
