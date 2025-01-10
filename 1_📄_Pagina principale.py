@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from nba_api.stats.endpoints import LeagueLeaders
+from nba_api.stats.static import teams
 
 
 st.set_page_config(
@@ -172,7 +174,7 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown("""
             "Il Michael Jordan dei giorni nostri": è così che Steve Kerr,
-            allenatore dei Warriors dal 2015, ha definito Steph Curry.
+            allenatore dei Warriors, ha definito Steph Curry.
             Curry è stato fondamentale nella rivoluzione del gioco del basket, 
             in particolare nel rendere il tiro da tre punti una parte centrale 
             dell’attacco NBA. Le sue straordinarie capacità di tiro a lunga distanza, 
@@ -237,10 +239,19 @@ st.markdown("""
             - l'abilità generale nel realizzare i tiri da 3 non giunge a un limite
             - le chiamate arbitrali favoriscono l'attacco piuttosto che la difesa
             
-            il volume di tiri da tre tentati e l'efficienza offensiva non diminuiranno
+            il volume di tiri da tre tentati e l'efficienza offensiva 
+            difficilmente diminuiranno.
             """)
 
-# Inserisco un grafico che riassume l'utilizzo dei tiri da 3 punti negli anni
+# Ricavo il numero di tiri da tre tentati da ogni squadra nella lega
+# Creo un elenco delle stagioni da considerare
+season_list = []
+for i in range(1979, 2024):
+    season = f"{i}-{i + 1}"
+    season_list.append(season[:5] + season[7:])
+st.write(season_list)
+# Mi ricavo il numero di tiri da tre tentati da ogni giocatore
+# in una specifica stagione
 
 
 
