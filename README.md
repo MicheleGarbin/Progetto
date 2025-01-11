@@ -75,10 +75,10 @@ Dati e informazioni varie sono stati presi da:
   tradizionali per analizzare aspetti come la lettura del gioco, l’intelligenza 
   cestistica e l’impatto complessivo di un giocatore su una partita. Il canale offre
   anche contenuti su leggende del basket, confronti tra giocatori storici e attuali, 
-  e riflessioni sullo sviluppo e l’evoluzione del gioco nel corso degli anni. 
+  e riflessioni sullo sviluppo e l’evoluzione del gioco nel corso degli anni
 - Basketball on paper - Dean Oliver (2004): questo libro è stato uno dei primi testi 
-  a promuovere decisioni e analisi data-driven nel mondo del basket.
-  
+  a promuovere decisioni e analisi data-driven nel mondo del basket
+
 
 
 
