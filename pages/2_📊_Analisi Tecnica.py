@@ -418,7 +418,7 @@ def win_analysis():
                 In questo contesto, i Four Factors possono essere utilizzati come 
                 predittori in un modello di regressione logistica per spiegare 
                 e predire il successo nel basket. Verifichiamo l'adattamento 
-                sui dati della stagione appena conclusa
+                sui dati della stagione appena conclusa.
                 """)
 
     # Di seguito riporto la procedura per ottenere i dati desiderati. 
