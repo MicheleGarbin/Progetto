@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from nba_api.stats.endpoints import PlayerDashboardByShootingSplits, CommonPlayerInfo
-from nba_api.stats.endpoints import LeagueGameFinder, BoxScoreTraditionalV2
+from nba_api.stats.endpoints import LeagueDashTeamStats
 from nba_api.stats.static import players
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -303,10 +302,160 @@ def pca_analysis():
                   """)
     
     
-  
+# Questa funzione spiega il paradosso di simpson, utile da conoscere quando 
+# si confrontano dati con più variabili di classificazione
 def simpson_paradox():
-    st.write("Ciao")
+    st.write("Il paradosso di Simpson")
+    
+    st.markdown("""
+                Il paradosso di Simpson è un fenomeno statistico in cui 
+                una tendenza che appare in diversi gruppi di dati può essere
+                invertita quando i gruppi sono combinati insieme. In altre 
+                parole, quando i dati vengono aggregati, la relazione tra 
+                due variabili può apparire in modo opposto rispetto a quando 
+                sono separati in sottogruppi.
+                
+                Prendiamo ad esempio due variabili quantitative X e Y e una
+                variabile categoriale C con modalità c1 e c2
+                """)
+    st.image("charts/simpson_paradox.jpg")
+    st.markdown("""
+                Si nota che la tendenza entro i gruppi viene ribaltata quando 
+                si aggregano i dati. 
+                
+                Consideriamo ora un dataframe in cui le colonne rappresentano due 
+                giocatori e le righe rappresentano due stagioni. I valori entro 
+                le celle rappresentano la percentuale di tiri segnati:
+                """)
+    freq_abs = pd.DataFrame({"Giocatore 1": ["7 / 20", "50 / 200"],
+                       "Giocatore 2": ["15 / 50", "14 / 60"]})
+    st.table(freq_abs)
+    st.markdown("""
+                Calcoliamo le frequenze relative osservate:
+                """)
+    freq_obs = pd.DataFrame({"Giocatore 1": ["35%", "25%"],
+                       "Giocatore 2": ["30%", "23.33%"]})
+    st.table(freq_obs)
+    st.markdown("""
+                In ciascuna delle due stagioni il giocatore 1 ha ottenuto
+                una miglior percentuale al tiro del giocatore 2.
+                Cosa succede però se aggreghiamo i dati?
+                
+                - Giocatore 1: (7 + 50) / (20 + 200) = 57 / 220 (25.9%)
+                - Giocatore 2: (15 + 14) / (50 + 60) = 29 / 110 (26.4%)
+                
+                Il giocatore 2 risulta migliore del giocatore 1!
+                Il giocatore 1 ha sì delle percentuali migliori nelle singole 
+                stagioni ma i singoli denominatori sono molto diversi (20 e 200).
+                Quando aggreghiamo i dati, prevale l'effetto della seconda
+                stagione rispetto alla prima, proprio perchè il numero di 
+                tiri tentati è molto più alto: tra le due percentuali. Per
+                il giocatore 2 invece la percentuale marginale si trova quasi
+                a metà tra quelle delle stagioni singole: non a caso, i singoli
+                denominatori sono molto simili (50 e 60).
+                
+                Bisogna ammettere che questo è un esempio molto semplice
+                costruito a tavolino. Non è detto che ciò accada sempre. 
+                Rimane comunque necessario verificare le conclusioni per dati aggregati 
+                guardando le frequenze condizionate per evitare di giungere a 
+                conclusioni errate. Come colonne potremmo avere squadre oltre 
+                ai giocatori; righe plausibili sono zone di tiro, quarti della 
+                partita, momenti della stagione, serie di playoff e così via. La 
+                disparità potrebbe derivare da un confronto di due stagioni
+                in cui un giocatore con un minutaggio diverso, con 
+                un infortunio subito o con un ruolo diverso.
+                """)
+    
+    st.markdown("---")
+    
+    covid_simpson_paradox_link = "https://www.youtube.com/watch?v=t-Ci3FosqZs"
+    
+    st.markdown("""
+                Gli studi osservazionali retrospettivi sono un tipo di ricerca 
+                in cui i ricercatori analizzano dati raccolti in passato per 
+                esaminare relazioni tra eventi o variabili. In questi studi, 
+                non si interviene attivamente sulla popolazione di interesse, 
+                ma si osservano eventi già accaduti, utilizzando informazioni 
+                disponibili da registri, cartelle cliniche, o altre fonti 
+                storiche. Quest'applicazione web descrive e permette di 
+                fare proprio questo
+                
+                In questi studi, il paradosso di Simpson è un esempio chiave 
+                di come le analisi statistiche superficiali possano portare a 
+                risultati errati.
+                """)
+                
+    st.write(f"Un approfondimento interessante riguardo a ciò si trova al \
+              seguente link: \
+              [Simpson e il Covid]({covid_simpson_paradox_link})")
+    
 
+
+# Questa funzione costruisce due modelli logistici basati in cui 
+# le esplicative sono i four factors e i tiri da tre mentre la
+# risposta sono le vittorie in regular season. I dati di riferimento
+# sono della scorsa stagione
+def win_analysis():
+    st.title("Come vincere nel basket moderno")
+    
+    st.markdown("""
+                Nel basket, il successo di una squadra può essere analizzato 
+                attraverso vari aspetti del gioco, ma pochi strumenti si sono 
+                dimostrati tanto efficaci quanto i Four Factors, introdotti 
+                dall’analista-statistico Dean Oliver. Considerato uno dei padri 
+                della moderna analisi statistica nel basket, Oliver ha rivoluzionato 
+                il modo di valutare le performance delle squadre con il suo 
+                approccio quantitativo. Nel suo libro Basketball on Paper (2004), 
+                Oliver ha individuato quattro elementi chiave che influenzano in modo 
+                determinante l’esito delle partite.
+
+                I Four Factors sono metriche che sintetizzano le componenti 
+                fondamentali del gioco: la capacità di segnare con efficienza 
+                (eFG%), la protezione del pallone per evitare palle perse (TOV%),
+                il controllo dei rimbalzi offensivi per ottenere seconde opportunità 
+                (ORB%) e la capacità di conquistare punti facili dalla lunetta (FTR).
+
+                In questo contesto, i Four Factors possono essere utilizzati come 
+                predittori in un modello di regressione logistica per spiegare 
+                e predire il successo nel basket. Verifichiamo l'adattamento 
+                sui dati della stagione appena conclusa
+                """)
+
+    # Di seguito riporto la procedura per ottenere i dati desiderati. 
+    # Salvo tali dati in un file per evitare di riutilizzare l'API
+    if False:
+        team_stats = LeagueDashTeamStats(season = "2023-24").league_dash_team_stats.get_data_frame()
+        # Numero di tiri da tre tentati e segnati a partita
+        team_stats["FG3M/GP"] = team_stats["FG3M"] / 82
+        team_stats["FG3A/GP"] = team_stats["FG3A"] / 82
+        # Percentuale effettiva dal campo (media ponderata che dà più valore
+        # al tiro da tre punti in quanto, se segnato, genera più punti
+        # di un tiro da due)
+        team_stats["eFG%"] = (team_stats["FGM"] + 0.5 * team_stats["FG3M"]) / team_stats["FGA"]
+        # Percentuale di palle perse: viene calcolata come numero di palle perse
+        # su 100 possessi. Il numero di possessi viene stimato tramite una 
+        # formula introdotta dallo stesso Dean Oliver
+        team_stats["Possessions/GP"] = (team_stats["FGA"] + 0.44 * team_stats["FTA"] + team_stats["TOV"]) / 82
+        team_stats["TOV%"] = team_stats["TOV"] / (team_stats["Possessions/GP"] * 82)
+        # Percentuale di rimbalzi offensivi: numero di rimbalzi offensivi
+        # diviso totale di rimbalzi, ovvero somma di rimbalzi offensivi 
+        # e rimbalzi difensivi
+        team_stats["ORB%"] = team_stats["OREB"] / (team_stats["OREB"] + team_stats["DREB"])
+        # Numero di tiri liberi tentati / numero di tiri dal campo tentati. 
+        # I tiri liberi avvengono da una posizione fissa e a gioco
+        # fermo, per cui non vengono conteggiati come tiri dal campo,
+        # i quali avvengono durante i 24 secondi di un'azione e
+        # da posizioni variabili.
+        team_stats["FTR"] = team_stats["FTA"] / team_stats["FGA"]
+        # Considero solamente i dati che mi interessano: oltre ai
+        # four factors appena calcolati considero anche i tiri da 3 
+        # che mi serviranno per testare un ampliamento del modello
+        team_stats = team_stats[["W", "L", "FG3M/GP", "FG3A/GP", "Possessions/GP",
+                                "eFG%", "TOV%", "ORB%", "FTR"]]
+        team_stats.to_csv("data/team_stats.txt", sep = "\t", index = False)
+    # L'analisi prosegue nel file R "win_probability_analysis.R"
+    
+    
 
 # Funzione principale della pagina
 def analisi_tecnica():
@@ -316,15 +465,19 @@ def analisi_tecnica():
     with col2:
         button2 = st.button("Paradosso di Simpson", use_container_width = True)
     with col3:
-        button3 = st.button("", use_container_width = True)
+        button3 = st.button("Cosa serve per vincere", use_container_width = True)
     
     st.markdown("---")
     
     if button1:
         pca_analysis()
-    if button2:
+    elif button2:
         simpson_paradox()
-        
+    elif button3:
+        win_analysis()
+    else:
+        st.success("Seleziona uno dei 3 bottoni soprastanti")
+    
         
 analisi_tecnica()
     
