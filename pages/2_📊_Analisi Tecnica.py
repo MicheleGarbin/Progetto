@@ -305,7 +305,7 @@ def pca_analysis():
 # Questa funzione spiega il paradosso di simpson, utile da conoscere quando 
 # si confrontano dati con più variabili di classificazione
 def simpson_paradox():
-    st.write("Il paradosso di Simpson")
+    st.title("Il paradosso di Simpson")
     
     st.markdown("""
                 Il paradosso di Simpson è un fenomeno statistico in cui 
