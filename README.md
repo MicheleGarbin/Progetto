@@ -1,5 +1,10 @@
 # L'evoluzione del gioco del basket
 
+Per avviare l'applicazione dal proprio computer basta clonare il repository
+e scrivere nel terminale:
+
+> uv run streamlit run "1_📄_Pagina principale.py"
+
 Lo scopo di questo progetto è presentare come si è evoluto il gioco del basket 
 nel corso del tempo. Al suo interno l'utente ha la possibilità di selezionare
 tra 4 pagine:
