@@ -28,6 +28,10 @@ tra 4 pagine:
      di tiri effettuati in tale zona e colorati secondo la differenza tra 
      percentuale di realizzazione del giocatore e percentuale di 
      realizzazione della lega.
+
+   I due grafici si possono ottenere selezionando rispettivamente:
+   - Marco Belinelli, stagione 2013-2014, Playoff
+   - Marco Belinelli, tutta la carriera, Regular Season
    
    In una zona specifica, con meno di 5 tiri a disposizione, non ha molto senso
    analizzare la percentuale di realizzazione: per effetto del caso, un giocatore
@@ -36,7 +40,7 @@ tra 4 pagine:
 4. La quarta pagina fornisce le informazioni principali sulle 30 attuali 
    franchigie NBA. Vi è inoltre una sezione apposita per tracciare il rendimento   
    di ciascuna squadra nelle varie stagioni e confrontare i valori registrati
-   per le metriche principali tra squadre diverse.
+   delle metriche principali tra squadre diverse.
 
 Le prime due pagine sono delle vere e proprie analisi, mentre le ultime due
 vogliono mimare dei piccoli database. Così facendo, l'utente può ottenere tutte le
@@ -50,7 +54,7 @@ tempo l'API smette di restituire i risultati e dà errore. Questo succede
 abbastanza spesso; serve aspettare qualche minuto e riaggiornare la pagina.
 
 Per evitare le troppe chiamate all'API, i dati necessari al funzionamento
-delle prime due pagine si trovano nei file presenti nella cartella data.
+delle prime due pagine si trovano nella cartella data.
 Le procedure per ottenere tali dati sono riportate nel codice dentro a dei
 blocchi indentati sotto a "if False:" (in questo modo tale blocco non viene
 eseguito). Ho agito in questa maniera poichè Streamlit scrive sull'applicazione
@@ -62,18 +66,18 @@ per funzionare si basano esclusivamente sulle chiamate all'API.
 Purtroppo alcune statistiche non sono disponibili perchè la lega nel passato
 non raccoglieva tanti dati quanto oggi.
 
-Oltre all'API, altri strumenti mi sono stati molto utili:
+Oltre all'API, altri strumenti utili sono:
 - [documentazione MPL Court](https://github.com/mlsedigital/mplbasketball/blob/main/README.md):
   libreria grafica per python che permette di disegnare punti su campi da basket
 - [Chat GPT](https://chatgpt.com/): questo Large Language Model non ha bisogno di
-  presentazioni. Mi ha evitato la lettura di lunghe documentazioni quando mi 
-  serviva introdurre moduli/librerie a me non note. In generale risolve la 
+  presentazioni. Mi ha evitato la lettura di lunghe documentazioni quando
+  dovevo utilizzare moduli/librerie a me non note. In generale risolve la 
   maggior parte dei problemi
-
-Dati e informazioni varie sono stati presi da:
 - [NBA court matplotlib](http://savvastjortjoglou.com/nba-shot-sharts.html): 
   spiega come disegnare una metà campo da basket tramite gli 
   strumenti di matplotlib
+
+Dati e informazioni varie sono stati presi da:
 - [Thinking Basketball - YT Channel](https://www.youtube.com/@ThinkingBasketball):
   Thinking Basketball si distingue per la sua capacità di esaminare il gioco da una 
   prospettiva più intellettuale e dettagliata, spesso andando oltre le statistiche 
