@@ -202,23 +202,23 @@ def pca_analysis():
     col1, col2 = st.columns(2)
     with col1:
         fig, ax = plt.subplots(figsize = (8, 6))
-        ax.scatter(df_season_1_pca['PC1'], df_season_1_pca['PC2'], color = 'blue')
+        ax.scatter(df_season_1_pca["PC1"], df_season_1_pca["PC2"], color = "blue")
         for i, label in enumerate(df_season_1_pca["POSITION"]):
-            ax.annotate(label, (df_season_1_pca['PC1'][i], df_season_1_pca['PC2'][i]),
-                        textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
-        ax.set_xlabel('Componente principale 1 (PC1)')
-        ax.set_ylabel('Componente principale 2 (PC2)')
-        ax.set_title('Stagione 2003-2004')
+            ax.annotate(label, (df_season_1_pca["PC1"][i], df_season_1_pca["PC2"][i]),
+                        textcoords = "offset points", xytext = (0, 5), ha = "center", fontsize = 9)
+        ax.set_xlabel("Componente principale 1 (PC1)")
+        ax.set_ylabel("Componente principale 2 (PC2)")
+        ax.set_title("Stagione 2003-2004")
         st.pyplot(fig)
     with col2:
         fig, ax = plt.subplots(figsize = (8, 6))
-        ax.scatter(df_season_2_pca['PC1'], df_season_2_pca['PC2'], color = 'blue')
-        for i, label in enumerate(df_season_2_pca['POSITION']):
-            ax.annotate(label, (df_season_2_pca['PC1'][i], df_season_2_pca['PC2'][i]),
-                        textcoords = "offset points", xytext = (0, 5), ha = 'center', fontsize = 9)
-        ax.set_xlabel('Componente principale 1 (PC1)')
-        ax.set_ylabel('Componente principale 2 (PC2)')
-        ax.set_title('Stagione 2023-2024')
+        ax.scatter(df_season_2_pca["PC1"], df_season_2_pca["PC2"], color = "blue")
+        for i, label in enumerate(df_season_2_pca["POSITION"]):
+            ax.annotate(label, (df_season_2_pca["PC1"][i], df_season_2_pca["PC2"][i]),
+                        textcoords = "offset points", xytext = (0, 5), ha = "center", fontsize = 9)
+        ax.set_xlabel("Componente principale 1 (PC1)")
+        ax.set_ylabel("Componente principale 2 (PC2)")
+        ax.set_title("Stagione 2023-2024")
         st.pyplot(fig)    
     st.markdown("""
                 Coloro che riportano punteggi distanti 
@@ -245,7 +245,7 @@ def pca_analysis():
                                      columns = df_season_1.columns[1:])
     loadings_season_2 = pd.DataFrame(pca_season_2.components_[:2], 
                                      columns = df_season_2.columns[1:])
-    st.write(loadings_season_1)
+    st.dataframe(loadings_season_1, hide_index = True)
     st.markdown("""
                 - la PC1 riguarda soprattutto i tiri dal pitturato e i tiri da 3 punti
                 - la PC2 dà importanza ai tiri dal midrange e ai tiri assistiti dalla RA
@@ -261,7 +261,7 @@ def pca_analysis():
     
     st.write("")
     
-    st.write(loadings_season_2)
+    st.dataframe(loadings_season_2, hide_index = True)
     st.markdown("""
                 - l'interpretazione della PC1 è molto simile al caso sopra
                 - la PC2 riguarda i tiri assistiti
@@ -329,13 +329,13 @@ def simpson_paradox():
                 """)
     freq_abs = pd.DataFrame({"Giocatore 1": ["7 / 20", "50 / 200"],
                        "Giocatore 2": ["15 / 50", "14 / 60"]})
-    st.table(freq_abs)
+    st.dataframe(freq_abs, hide_index = True)
     st.markdown("""
                 Calcoliamo le frequenze relative osservate:
                 """)
-    freq_obs = pd.DataFrame({"Giocatore 1": ["35%", "25%"],
+    freq_rel = pd.DataFrame({"Giocatore 1": ["35%", "25%"],
                        "Giocatore 2": ["30%", "23.33%"]})
-    st.table(freq_obs)
+    st.dataframe(freq_rel, hide_index = True)
     st.markdown("""
                 In ciascuna delle due stagioni il giocatore 1 ha ottenuto
                 una miglior percentuale al tiro del giocatore 2.
@@ -389,7 +389,6 @@ def simpson_paradox():
               seguente link: \
               [Simpson e il Covid]({covid_simpson_paradox_link})")
     
-
 
 # Questa funzione costruisce due modelli logistici basati in cui 
 # le esplicative sono i four factors e i tiri da tre mentre la
@@ -454,6 +453,56 @@ def win_analysis():
                                 "eFG%", "TOV%", "ORB%", "FTR"]]
         team_stats.to_csv("data/team_stats.txt", sep = "\t", index = False)
     # L'analisi prosegue nel file R "win_probability_analysis.R"
+    
+    st.markdown("""
+                I modelli possibili sono stati adattati sui dati della stagione 
+                passata; dopodichè ne è stata valutata la capacità predittiva 
+                confrontando il numero di vittorie di ciascuna squadra nella 
+                passata stagione e il numero di vittorie predetto.
+                """)
+    file_path = "win_probability_analysis.pdf"
+    with open(file_path, "rb") as file:
+        file_data = file.read()
+    st.download_button(
+        label = "Scarica l'analisi completa",
+        data = file_data,
+        file_name = "win_probability_analysis.pdf",
+        mime = "application/pdf"
+    )
+    st.markdown("""
+                L'intero procedimento si trova nel file indicato sopra.
+                Per brevità riportiamo i risultati del modello che ha avuto 
+                l'adattamento migliore:
+                """)
+    st.latex(r'''
+    \text{logit}(\mu_i) = \beta_1 \cdot \left(\frac{\text{FG3M}}{\text{GP}}\right)_i   
+    + \beta_2 \cdot \text{pace}_i + \beta_3 \cdot \text{eFG\%}_i 
+    + \beta_4 \cdot \text{TOV\%}_i + \beta_5 \cdot \text{ORB\%}_i 
+    + \beta_6 \cdot \text{FTR\%}_i 
+    ''')
+    st.latex(r"""
+    \forall i \in \{1, 2, \dots, 30\}, \text{ con } i \text{ che indica le franchigie NBA.}
+    """)
+    st.image("charts/win_probability_glm.png", use_container_width = True)
+    st.markdown("""
+                Le vittorie predette si scostano da quelle osservate 
+                di 4 unità mediamente. Per una previsione più precisa si
+                dovrebbe tener conto di altri aspetti, ad esempio:
+                - ciascuna franchigia gioca più partite con le franchigie 
+                  più vicine (in termini geografici) e meno partite
+                  con quelle più lontane; una squadra può giocare più 
+                  volte contro squadre a essa più favorevoli rispetto 
+                  a squadre più scomode e viceversa
+                - non tutti giocano con gli stessi giorni di riposo: in una
+                  stagione NBA può capitare di giocare 5 partite in trasferta
+                  di fila o dei back-to-back(partite in giorni successivi): una
+                  squadra in questa situazione può perdere lucidità, specie se affronta
+                  un avversario molto più riposato
+                - gli infortuni possono costringere delle star/giocatori chiave
+                  a sedersi in panchina più del dovuto; anche se molto spesso 
+                  risultano difficilmente prevedibili, la presenza o meno di 
+                  certi giocatori può cambiare totalmente l'esito di una partita
+                """)
     
     
 

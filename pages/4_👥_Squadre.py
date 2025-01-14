@@ -234,7 +234,6 @@ def team_description(selected_team_id):
     social_media_data = TeamDetails(selected_team_id).team_social_sites.get_data_frame()
     st.markdown("---")
     # Creo una lista di link per i vari social ufficiali della squadra selezionata
-    # Crea una lista di link con il formato desiderato
     elenco_link = f"Link ai social network ufficiali della \
                    squadra selezionata:\n"
     for index, row in social_media_data.iterrows():
@@ -396,10 +395,10 @@ def faceting(combined_team_dashboard, metric_choice, selected_season_type, selec
     # Trasformo il dataframe combinato delle due squadre per utilizzare il faceting
     combined_team_dashboard = pd.melt(
         combined_team_dashboard, 
-        id_vars=[col for col in combined_team_dashboard.columns if col not in metric_choice], 
-        value_vars=metric_choice,  # Colonne da trasformare
-        var_name="METRIC",  # Nome della nuova colonna per i nomi delle metriche
-        value_name="VALUES"  # Nome della nuova colonna per i valori
+        id_vars = [col for col in combined_team_dashboard.columns if col not in metric_choice], 
+        value_vars = metric_choice,  # Colonne da trasformare
+        var_name = "METRIC",  # Nome della nuova colonna per i nomi delle metriche
+        value_name = "VALUES"  # Nome della nuova colonna per i valori
     )
     
     # Costruiamo i grafici effettivi sfruttando il faceting
@@ -452,7 +451,11 @@ def faceting(combined_team_dashboard, metric_choice, selected_season_type, selec
                  """)
     
 
-# Funzione principale della pagina
+# Questa è la funzione principale della pagina: l'utente seleziona 
+# una squadra e ottiene delle informazioni sulla storia di tale squadra. 
+# Dopodichè può confrontare le statistiche di una squadra in una certa 
+# stagione con quelle di un'altra squadra di un'altra stagione
+# a suo piacimento
 def squadre():
     st.title("Sezione squadre")
     st.write("")

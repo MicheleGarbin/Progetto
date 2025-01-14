@@ -6,13 +6,12 @@ import matplotlib.colors as mcolors
 import numpy as np
 import seaborn as sns
 from sklearn.cluster import KMeans
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from matplotlib.colors import ListedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.patches import RegularPolygon, Circle, Rectangle, Arc
+from matplotlib.patches import Circle, Rectangle, Arc
 from matplotlib import cm
-
 from nba_api.stats.static import players
-from nba_api.stats.endpoints import playergamelog, playercareerstats, shotchartdetail, ShotChartDetail
+from nba_api.stats.endpoints import playercareerstats, shotchartdetail, ShotChartDetail
 from mplbasketball import Court
 
 
@@ -24,7 +23,8 @@ def get_player_data(player_id):
     return pl.DataFrame(data)  # converto in Polars
         
         
-# Questa funzione riporta sulla pagina streamlit le statistiche individuali richieste
+# Questa funzione riporta sulla pagina streamlit le statistiche 
+# individuali richieste
 def get_player_stats(player_data, selected_season, season_type_choice, per_mode):
     if selected_season == "Tutte":
         if  season_type_choice == "Regular Season":
@@ -102,8 +102,9 @@ def get_player_stats(player_data, selected_season, season_type_choice, per_mode)
                         )
 
 
-# Questa funzione restituisce il dataframe con tutte le informazioni sul tiro per un certo
-# giocatore secondo la stagione, la fase della stagione e i minuti sul cronometro
+# Questa funzione restituisce il dataframe con tutte le informazioni sul tiro 
+# per un certo giocatore secondo la stagione, la fase della stagione e 
+# i minuti rimanenti sul cronometro
 def get_player_shot_chart(selected_player_id, shot_type, selected_season, season_type_choice, game_segment, minutes_left, seasons):
     if selected_season == "Tutte":
         shot_chart_data = pd.DataFrame()
@@ -194,8 +195,8 @@ def get_player_shot_chart(selected_player_id, shot_type, selected_season, season
     return shot_chart_data
         
         
-# Creo una funzione che, dato un elenco di stagioni, mi dà lo shot chart di tutti i giocatori 
-# che hanno giocato in nba in tali stagioni
+# Questa funzione, dato un elenco di stagioni, restituisce lo shot chart di
+# tutti i giocatori che hanno giocato in nba in tali stagioni
 def get_league_shot_chart(selected_player_id, selected_season, shot_type, season_type_choice, game_segment, minutes_left, seasons):
     if selected_season == "Tutte":
         league_shot_chart_data = pd.DataFrame()
@@ -286,8 +287,9 @@ def get_league_shot_chart(selected_player_id, selected_season, shot_type, season
     return league_shot_chart_data
    
 
-# Questa funzione mi permette di disegnare la metà campo su cui rappresenterò i tiri scelti
-def draw_court(ax = None, color = 'black', lw = 2, outer_lines = False):
+# Questa funzione mi permette di disegnare la metà campo su cui 
+# rappresenterò i tiri scelti
+def draw_court(ax = None, color = "black", lw = 2, outer_lines = False):
     # Se non viene fornito un oggetto axes su cui tracciare, utilizza semplicemente quello corrente
     if ax is None:
         ax = plt.gca()
@@ -313,10 +315,10 @@ def draw_court(ax = None, color = 'black', lw = 2, outer_lines = False):
                          linewidth = lw, color = color, fill = False)
     # Creazione dell'arco inferiore del tiro libero
     bottom_free_throw = Arc((0, 142.5), 120, 120, theta1 = 180, theta2 = 0,
-                            linewidth = lw, color = color, linestyle = 'dashed')
+                            linewidth = lw, color = color, linestyle = "dashed")
     # Creazione della RA(Restricted Area), è un arco distante mento di 4ft 
     # dal centro del canestro
-    restricted = Arc((0, 0), 80, 80, theta1 = 0, theta2 = 180, linewidth=lw,
+    restricted = Arc((0, 0), 80, 80, theta1 = 0, theta2 = 180, linewidth = lw,
                      color = color)
 
     # Creazione della linea da tre punti: creazione delle linee da tre punti laterali (da qui 
@@ -353,9 +355,10 @@ def draw_court(ax = None, color = 'black', lw = 2, outer_lines = False):
     return ax
 
 
-# Questa funzione crea una heatmap dei tiri del giocatore scelto. Per farlo, raccoglie le
-# coordinate dei tiri e stima la densità tramite il metodo del nucleo, per poi colorare
-# ciascun punto della metà campo in base alla densità stimata 
+# Questa funzione crea una heatmap dei tiri del giocatore scelto. Per farlo, 
+# raccoglie le coordinate dei tiri e stima la densità tramite il metodo del 
+# nucleo, per poi colorare ciascun punto della metà campo in base alla 
+# densità stimata 
 def heatmap(shot_chart_data, selected_player_name, selected_season, shot_type, season_type_choice, game_segment, minutes_left): 
     plt.figure(figsize=(12, 11))
     ax = sns.kdeplot(
@@ -405,19 +408,20 @@ def heatmap(shot_chart_data, selected_player_name, selected_season, shot_type, s
     # le zone di tiro in senso relativo e non in senso assoluto
     cbar.set_ticks([])
     # Aggiungo del testo sulla colorbar per facilitare la lettura del grafico
-    cbar.ax.text(0, 1.1, 'Bassa', ha = 'center', va = 'bottom', fontsize = 12, color = 'black')
-    cbar.ax.text(0.5, 1.1, 'Frequenza di tiro', ha = 'center', va = 'bottom', fontsize = 15, color = 'black')
-    cbar.ax.text(1, 1.1, 'Alta', ha = 'center', va = 'bottom', fontsize = 12, color = 'black')
+    cbar.ax.text(0, 1.1, "Bassa", ha = "center", va = "bottom", fontsize = 12, color = "black")
+    cbar.ax.text(0.5, 1.1, "Frequenza di tiro", ha = "center", va = "bottom", fontsize = 15, color = "black")
+    cbar.ax.text(1, 1.1, "Alta", ha = "center", va = "bottom", fontsize = 12, color = "black")
 
     # Vidualizzo il grafico
     st.pyplot(plt)
     
     
-# Questa funzione disegna 100 esagoni sulla metà campo, ciascuno dei quali si riferisce
-# a un insieme di tiri che il giocatore prende da quella posizione. La grandezza degli esagoni
-# individua la quantità dei tiri di quel cluster presenti nel dataframe. Il colore invece,
-# determina se la percentuale di realizzazione di quei tiri sia superiore o inferiore
-# a quella calcolata per i tiri simili (nel senso di tipo, anno, momento della stagione, ecc...) 
+# Questa funzione disegna 100 esagoni sulla metà campo, ciascuno dei quali 
+# si riferisce a un insieme di tiri che il giocatore prende da quella posizione. 
+# La grandezza degli esagoni individua la quantità dei tiri di quel cluster 
+# presenti nel dataframe. Il colore invece, determina se la percentuale di 
+# realizzazione di quei tiri sia superiore o inferiore a quella calcolata 
+# per i tiri simili (nel senso di tipo, anno, momento della stagione, ecc...) 
 # effettutati da tutta la lega
 def hexmap(shot_chart_data, league_shot_chart_data, selected_player_name, selected_season, shot_type, season_type_choice, game_segment, minutes_left):
     # Convertiamo da pollici a piedi
@@ -537,8 +541,9 @@ def hexmap(shot_chart_data, league_shot_chart_data, selected_player_name, select
     st.pyplot(fig)
     
     
-# Questa funzione è il cuore della pagina. Dà la possibilità all'utente di scegliere un giocatore, il tipo di 
-# tiro e altri parametri per produrre dei grafici intuitivi ma potenti a livello di informazione contenuta
+# Questa funzione è il cuore della pagina. Dà la possibilità all'utente di 
+# scegliere un giocatore, il tipo di tiro e altri parametri per produrre 
+# dei grafici intuitivi ma potenti a livello di informazione contenuta
 def giocatori():
     st.title("Sezione giocatori")
     st.write("")

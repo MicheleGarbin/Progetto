@@ -121,7 +121,7 @@ data = {
     "Punti attesi per tiro": [1.2, 1.0, 1.2]
 }
 shot_type = pd.DataFrame(data)
-st.dataframe(shot_type)
+st.dataframe(shot_type, hide_index = True)
 st.markdown("""
             Semplificando molto, si può notare che i tiri più efficienti
             siano soprattutto layup/schiacciate e tiri da tre; una volta capita
