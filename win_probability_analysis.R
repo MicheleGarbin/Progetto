@@ -5,6 +5,11 @@
 # Per cominciare, carichiamo i dati 
 data <- read.table("data/team_stats.txt", header = T)
 head(data)
+# Franchigie considerate
+franchigie <- c("ATL", "BOS", "BKN", "CHA", "CHI", "CLE", "DAL", "DEN", "DET", "GSW",
+                "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
+                "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+
 
 # Come primo modello consideriamo come esplicative le componenti principali derivanti dai 4 fattori
 apply(data[, 6:9], 2, sd)
@@ -28,14 +33,11 @@ pchisq(win.prob.glm.pca$null.deviance - win.prob.glm.pca$deviance,
 # H0 : modello corrente  H1: modello saturo
 pchisq(win.prob.glm.pca$deviance, win.prob.glm.pca$df.residual, lower.tail = FALSE)
 # Compariamo i valori osservati con i valori previsti dal modello. L'asse x indica le squadre in ordine alfabetico
-with(data,{
-  plot(1:30, W / 82, pch = 20, 
-       xlab = "", xaxt = "n", ylab = "RS WIN%",
-       main = "Valori predetti dai four factors (PCA)")
-  points(1:30, fitted(win.prob.glm.pca), pch = 7, col = 2)
-  legend("topright", legend = c("Valori osservati", "Valori previsti"),
-         col = c(1, 2), pch = c(20, 7))
-})
+diff.pca <- data$W - fitted(win.prob.glm.pca) * 82
+plot(1:30, diff.pca, type = "h", xlab = "NBA teams", ylab = "W.obs - W.exp",
+     ylim = c(-25, 20), xaxt = "n", main = "Adattamento modello logit PCA")
+abline(h = 0, lty = 2)
+axis(1, at = 1:30, labels = franchigie, las = 2, cex.axis = 0.8)
 # L'adattamento non è sicuramente dei migliori. Il modello, utilizzando solamente due esplicative, deve mediare le percentuali osservate e nei casi estremi (numero di vittorie molto alto o molto basso) dà risultati fuorvianti
 
 # Costruiamo un altro modello prendendo come esplicative i 4 fattori senza applicare la PCA. La PCA comporta infatti una riduzione della dimensionalità: il modello che ne deriva ha, oltre all'intercetta, 2 parametri (numero di PC considerate) invece che 4. Vediamo se, con più esplicative, il modello si adatta meglio ai dati
@@ -49,14 +51,11 @@ colnames(compare.matrix) <- c("PCA", "4Factors")
 row.names(compare.matrix) <- c("AIC", "BIC")
 compare.matrix
 # Anche qui confrontiamo valori osservati e predetti
-with(data,{
-  plot(1:30, W / 82, pch = 20, 
-       xlab = "", xaxt = "n", ylab = "RS WIN%",
-       main = "Valori predetti dai four factors")
-  points(1:30, fitted(win.prob.glm.0), pch = 7, col = 2)
-  legend("topright", legend = c("Valori osservati", "Valori previsti"),
-         col = c(1, 2), pch = c(20, 7))
-})
+diff.4f <- data$W - fitted(win.prob.glm.0) * 82
+plot(1:30, diff.4f, type = "h", xlab = "NBA teams", ylab = "W.obs - W.exp",
+     ylim = c(-25, 20), xaxt = "n", main = "Adattamento modello logit 4 factors")
+abline(h = 0, lty = 2)
+axis(1, at = 1:30, labels = franchigie, las = 2, cex.axis = 0.8)
 # L'adattamento è visibilmente migliorato, tuttavia non siamo soddisfatti rispetto a ciò che otteniamo con il modello saturo
 # H0: modello corrente   H1: modello saturo
 pchisq(win.prob.glm.0$deviance, win.prob.glm.0$df.residual, lower.tail = FALSE)
@@ -78,14 +77,11 @@ compare.matrix
 # H0: modello corrente   H1: modello saturo
 pchisq(win.prob.glm$deviance, win.prob.glm$df.residual, lower.tail = FALSE)
 # Grafico valori previsti e osservati
-with(data,{
-  plot(1:30, W / 82, pch = 20, 
-       xlab = "", xaxt = "n", ylab = "RS WIN%",
-       main = "Valori predetti dai four factors")
-  points(1:30, fitted(win.prob.glm), pch = 7, col = 2)
-  legend("topright", legend = c("Valori osservati", "Valori previsti"),
-         col = c(1, 2), pch = c(20, 7))
-})
+diff.4f.mod <- data$W - fitted(win.prob.glm) * 82
+plot(1:30, diff.4f.mod, type = "h", xlab = "NBA teams", ylab = "W.obs - W.exp",
+     ylim = c(-25, 20), xaxt = "n", main = "Adattamento modello logit 4 factors + pace + 3P shot")
+abline(h = 0, lty = 2)
+axis(1, at = 1:30, labels = franchigie, las = 2, cex.axis = 0.8)
 # Media della discrepanza tra il numero di vittorie effettivo e il numero di vittorie stimato
 mean(abs(residuals(win.prob.glm, type = "response"))) * 82
 # Metodo alternativo
@@ -95,7 +91,7 @@ sd(abs(data$W - fitted(win.prob.glm) * 82))
 # Non vi è struttura di dipendenza tra i valori predetti e i residui
 plot(win.prob.glm, which = 1)
 
-# Le possibili interazioni aggiuntive non sono significative
+# Le possibili interazioni aggiuntive risultano non significative
 add1(win.prob.glm, . ~ . + (.)^2, test = "Chisq") 
 
 # In conclusione, il migliore dei modelli considerati è quello con le seguenti esplicative: tiri da tre punti segnati a partita, possessi a partita, percentuale effettiva, percentuale di palle perse, percentuale di rimbalzi offensivi e numero di tiri liberi rispetto ai tiri dal campo.
